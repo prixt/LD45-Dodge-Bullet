@@ -33,19 +33,23 @@ impl GameplayScene {
         let dir_vec = self.player.get_pos() - spawn_pos;
         let vel_vec = dir_vec.normalize() * rng.gen_range(50.0, 150.0);
         let size = rng.gen_range(5.0, 15.0);
-        let bullet: Box<dyn Actor> = if rng.gen_range(0, 10) <= 8 {
-            Box::new(Bullet::new(
+        let bullet: Box<dyn Actor> = match rng.gen_range(0, 100) {
+            0..=74 => Box::new(Bullet::new(
                 spawn_pos,
                 [size, size].into(),
                 vel_vec,
-            ))
-        }
-        else {
-            Box::new(DrunkBullet::new(
+            )),
+            75..=89 => Box::new(DrunkBullet::new(
                 spawn_pos,
                 [size, size].into(),
                 vel_vec,
-            ))
+            )),
+            _ => Box::new(HomingBullet::new(
+                spawn_pos,
+                [size, size].into(),
+                vel_vec,
+                self.player.get_pos(),
+            )),
         };
         self.enemies.push(bullet);
     }

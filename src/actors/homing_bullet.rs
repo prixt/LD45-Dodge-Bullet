@@ -1,23 +1,28 @@
 use super::*;
+use std::sync::Mutex;
 
-pub struct DrunkBullet {
+pub struct HomingBullet {
     pos: Point2<f32>,
     dim: Vector2<f32>,
     vel: Vector2<f32>,
-    drunk: f32,
+    target: Mutex<Point2<f32>>,
 }
 
-impl DrunkBullet {
+impl HomingBullet {
     pub fn new(
         pos: Point2<f32>, 
         dim: Vector2<f32>, 
-        vel: Vector2<f32>
+        vel: Vector2<f32>,
+        target: Point2<f32>,
     ) -> Self {
-        Self {pos,dim,vel, drunk: 0.0}
+        Self {
+            pos,dim,vel,
+            target: Mutex::new(target)
+        }
     }
 }
 
-impl Actor for DrunkBullet {
+impl Actor for HomingBullet {
     #[inline]
     fn get_pos(&self) -> Point2<f32> {
         self.pos
@@ -53,15 +58,29 @@ impl Actor for DrunkBullet {
         self.vel = vel
     }
 
-    fn update(&mut self, dt: f32) {
-        const TAU: f32 = std::f32::consts::PI * 2.0;
-        const DRUNK_FACTOR: f32 = 80.0;
+    fn has_action(&self) -> bool { true }
+    fn action(
+        &self,
+        _dt: f32,
+        player: &Player,
+        _: &[Box<dyn Actor>],
+    ) -> Option<Vec<Box<dyn Actor>>> {
+        *self.target.lock().unwrap() = player.get_pos();
+        None
+    }
 
-        self.drunk = na::wrap(self.drunk + dt, 0.0, TAU);
+    fn update(&mut self, dt: f32) {
+        const HOMING_FACTOR: f32 = 50.0;
+        const SPEED_LIMIT: f32 = 100.0;
+        let diff = *self.target.lock().unwrap() - self.pos;
+        let acc = diff.normalize() * HOMING_FACTOR;
+        self.vel += acc * dt;
+        let speed_sqr =
+            self.vel.x * self.vel.x + self.vel.y * self.vel.y;
+        if speed_sqr > SPEED_LIMIT * SPEED_LIMIT {
+            self.vel = self.vel.normalize() * SPEED_LIMIT;
+        }
         self.add_pos(self.vel * dt);
-        self.add_pos(
-            self.vel.normalize() * DRUNK_FACTOR * dt * self.drunk.cos()
-        );
     }
 
     fn draw(
@@ -75,7 +94,7 @@ impl Actor for DrunkBullet {
             mesh_builder.rectangle(
                 DrawMode::fill(),
                 rect,
-                [1.0, 0.5, 0.0, 1.0].into(),
+                [0.0, 0.5, 1.0, 1.0].into(),
             );
         }
         else {
@@ -83,7 +102,7 @@ impl Actor for DrunkBullet {
                 ctx,
                 DrawMode::fill(),
                 rect,
-                [1.0, 0.5, 0.0, 1.0].into(),
+                [0.0, 0.5, 1.0, 1.0].into(),
             )?;
             ggez::graphics::draw(
                 ctx,

@@ -7,9 +7,11 @@ use ggez::graphics::{
 mod player;
 mod bullet;
 mod drunk_bullet;
+mod homing_bullet;
 pub use player::Player;
 pub use bullet::Bullet;
 pub use drunk_bullet::DrunkBullet;
+pub use homing_bullet::HomingBullet;
 
 pub trait Actor: Send + Sync {
     fn get_pos(&self) -> Point2<f32>;
@@ -32,7 +34,6 @@ pub trait Actor: Send + Sync {
     }
 
     fn has_action(&self) -> bool { false }
-
     fn action(
         &self,
         _dt: f32,
