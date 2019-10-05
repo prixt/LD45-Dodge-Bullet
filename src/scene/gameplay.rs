@@ -5,6 +5,8 @@ pub struct GameplayScene {
     player: Player,
     enemies: Vec<Box<dyn Actor>>,
     timer: f32,
+    total_time: f32,
+    is_game_over: bool,
 }
 
 impl GameplayScene {
@@ -12,7 +14,9 @@ impl GameplayScene {
         let s = Self {
             player: Player::new([400.0,300.0].into(), [18.0, 18.0].into()),
             enemies: vec![],
-            timer: 2.5,
+            timer: 5.0,
+            total_time: 0.0,
+            is_game_over: false,
         };
         Box::new(s)
     }
@@ -29,12 +33,21 @@ impl GameplayScene {
         let dir_vec = self.player.get_pos() - spawn_pos;
         let vel_vec = dir_vec.normalize() * rng.gen_range(50.0, 150.0);
         let size = rng.gen_range(5.0, 15.0);
-        let bullet = Bullet::new(
-            spawn_pos,
-            [size, size].into(),
-            vel_vec,
-        );
-        self.enemies.push(Box::new(bullet));
+        let bullet: Box<dyn Actor> = if rng.gen_range(0, 10) <= 8 {
+            Box::new(Bullet::new(
+                spawn_pos,
+                [size, size].into(),
+                vel_vec,
+            ))
+        }
+        else {
+            Box::new(DrunkBullet::new(
+                spawn_pos,
+                [size, size].into(),
+                vel_vec,
+            ))
+        };
+        self.enemies.push(bullet);
     }
 }
 
@@ -45,6 +58,8 @@ impl Scene for GameplayScene {
         dt: f32,
         scene_event_queue: &mut VecDeque<SceneEvent>
     ) -> ggez::GameResult {
+        self.total_time += dt;
+
         self.timer -= dt;
         if self.timer <= 0.0 {
             self.timer += 5.0;
@@ -82,7 +97,7 @@ impl Scene for GameplayScene {
         self.player.set_pos(pos);
 
         let player_rect = self.player.get_rect();
-        let is_game_over = self.enemies
+        self.is_game_over = self.enemies
             .par_iter_mut()
             .update(|enemy| {
                 enemy.update(dt);
@@ -96,12 +111,31 @@ impl Scene for GameplayScene {
                 player_rect.overlaps(&enemy_rect)
             });
         
-        if is_game_over {
+        if self.is_game_over {
             scene_event_queue.push_back(
-                SceneEvent::Replace(
+                SceneEvent::Push(
                     GameOverScene::new_box()
                 )
             )
+        }
+        else {
+            let mut new_enemies: Vec<_> = self.enemies
+                .par_iter()
+                .filter_map(|enemy| {
+                    if enemy.has_action() {
+                        enemy.action(
+                            dt,
+                            &self.player,
+                            &self.enemies,
+                        )
+                    }
+                    else {
+                        None
+                    }
+                })
+                .flatten()
+                .collect();
+            self.enemies.append(&mut new_enemies);
         }
 
         Ok(())
@@ -117,7 +151,13 @@ impl Scene for GameplayScene {
             enemy.draw(ctx, Some(mesh_builder))?;
         }
         let mesh = mesh_builder.build(ctx)?;
-        graphics::draw(ctx, &mesh, graphics::DrawParam::default())?;
+        graphics::draw(
+            ctx,
+            &mesh,
+            graphics::DrawParam::default()
+        )?;
         Ok(())
     }
+
+    fn draw_in_background(&self) -> bool { true }
 }

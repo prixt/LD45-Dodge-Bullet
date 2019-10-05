@@ -21,7 +21,12 @@ impl Scene for GameOverScene {
         match key {
             KeyCode::R => {
                 scene_event_queue.push_back(
-                    SceneEvent::Replace(GameplayScene::new_box())
+                    SceneEvent::Pop
+                );
+                scene_event_queue.push_back(
+                    SceneEvent::Replace(
+                        GameplayScene::new_box()
+                    )
                 )
             }
             KeyCode::Q | KeyCode::Escape => {

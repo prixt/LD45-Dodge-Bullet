@@ -27,9 +27,11 @@ impl Scene for StartingScene {
         scene_event_queue: &mut VecDeque<SceneEvent>
     ) {
         match key {
-            KeyCode::Space => scene_event_queue.push_back(
-                SceneEvent::Replace(GameplayScene::new_box())
-            ),
+            KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
+                scene_event_queue.push_back(
+                    SceneEvent::Pop
+                )
+            },
             KeyCode::Q | KeyCode::Escape => {
                 ggez::event::quit(ctx)
             }

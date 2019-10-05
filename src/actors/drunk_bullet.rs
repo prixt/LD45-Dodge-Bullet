@@ -1,22 +1,23 @@
 use super::*;
 
-pub struct Bullet {
+pub struct DrunkBullet {
     pos: Point2<f32>,
     dim: Vector2<f32>,
     vel: Vector2<f32>,
+    drunk: f32,
 }
 
-impl Bullet {
+impl DrunkBullet {
     pub fn new(
         pos: Point2<f32>, 
         dim: Vector2<f32>, 
         vel: Vector2<f32>
     ) -> Self {
-        Self {pos,dim,vel}
+        Self {pos,dim,vel, drunk: 0.0}
     }
 }
 
-impl Actor for Bullet {
+impl Actor for DrunkBullet {
     #[inline]
     fn get_pos(&self) -> Point2<f32> {
         self.pos
@@ -52,6 +53,17 @@ impl Actor for Bullet {
         self.vel = vel
     }
 
+    fn update(&mut self, dt: f32) {
+        const TAU: f32 = std::f32::consts::PI * 2.0;
+        const DRUNK_FACTOR: f32 = 50.0;
+
+        self.drunk = na::wrap(self.drunk + dt, 0.0, TAU);
+        self.add_pos(self.vel * dt);
+        self.add_pos(
+            self.vel.normalize() * DRUNK_FACTOR * dt * self.drunk.cos()
+        );
+    }
+
     fn draw(
         &self,
         ctx: &mut ggez::Context,
@@ -63,7 +75,7 @@ impl Actor for Bullet {
             mesh_builder.rectangle(
                 DrawMode::fill(),
                 rect,
-                [1.0, 0.0, 0.0, 1.0].into(),
+                [1.0, 0.5, 0.0, 1.0].into(),
             );
         }
         else {
@@ -71,7 +83,7 @@ impl Actor for Bullet {
                 ctx,
                 DrawMode::fill(),
                 rect,
-                [1.0, 0.0, 0.0, 1.0].into(),
+                [1.0, 0.5, 0.0, 1.0].into(),
             )?;
             ggez::graphics::draw(
                 ctx,

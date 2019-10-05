@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-#[macro_use] extern crate lazy_static;
+// #[macro_use] extern crate lazy_static;
 use ggez;
 use ggez::event;
 use ggez::graphics;
@@ -21,9 +21,11 @@ impl MainState {
     fn new() -> ggez::GameResult<MainState> {
         let s = Self {
             current_scene: Some(
-                scene::GameplayScene::new_box()
+                scene::StartingScene::new_box()
             ),
-            previous_scene_stack: vec![],
+            previous_scene_stack: vec![
+                scene::GameplayScene::new_box(),
+            ],
             scene_event_queue: VecDeque::new(),
         };
         Ok(s)
