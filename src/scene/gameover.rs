@@ -1,10 +1,29 @@
 use super::*;
 
-pub struct GameOverScene;
+pub struct GameOverScene {
+    title: Text,
+    body: Text,
+    font: Font,
+}
 
 impl GameOverScene {
-    pub fn new_box() -> SceneBox {
-        let s = Self;
+    pub fn new_box(font: Font) -> SceneBox {
+        let mut title = Text::new("Game Over...");
+        title.set_font(font, Scale::uniform(50.0))
+            .set_bounds(
+                [300.0, std::f32::INFINITY],
+                graphics::Align::Center,
+            );
+        let mut body = Text::new("Press [R] to Restart.\nPress [Q] to Quit.");
+        body.set_font(font, Scale::uniform(30.0))
+            .set_bounds(
+                [300.0, std::f32::INFINITY],
+                graphics::Align::Center,
+            );
+        let s = Self {
+            title, body,
+            font,
+        };
         Box::new(s)
     }
 }
@@ -25,7 +44,7 @@ impl Scene for GameOverScene {
                 );
                 scene_event_queue.push_back(
                     SceneEvent::Replace(
-                        GameplayScene::new_box()
+                        GameplayScene::new_box(self.font)
                     )
                 )
             }
@@ -34,5 +53,29 @@ impl Scene for GameOverScene {
             }
             _ => ()
         }
+    }
+
+    fn draw(
+        &mut self,
+        ctx: &mut Context
+    ) -> ggez::GameResult {
+        let title_pos = {
+            let h = self.title.height(ctx) as f32;
+            Point2::new(250.0, 275.0 - h)
+        };
+        graphics::draw(
+            ctx,
+            &self.title,
+            graphics::DrawParam::default()
+                .dest(title_pos)
+        )?;
+        let body_pos = Point2::new(250.0, 350.0);
+        graphics::draw(
+            ctx,
+            &self.body,
+            graphics::DrawParam::default()
+                .dest(body_pos)
+        )?;
+        Ok(())
     }
 }

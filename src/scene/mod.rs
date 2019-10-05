@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use ggez::Context;
-use ggez::graphics;
+use ggez::graphics::{self, Font, Text, Scale};
 use ggez::input::keyboard::{
     self, KeyCode, KeyMods,
 };

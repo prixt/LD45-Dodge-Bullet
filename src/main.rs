@@ -1,6 +1,7 @@
+// #[macro_use] extern crate lazy_static;
+
 use std::collections::VecDeque;
 
-// #[macro_use] extern crate lazy_static;
 use ggez;
 use ggez::event;
 use ggez::graphics;
@@ -18,13 +19,17 @@ struct MainState {
 }
 
 impl MainState {
-    fn new() -> ggez::GameResult<MainState> {
+    fn new(ctx: &mut ggez::Context) -> ggez::GameResult<MainState> {
+        let font = graphics::Font::new_glyph_font_bytes(
+            ctx,
+            include_bytes!("../resources/Silver.ttf")
+        )?;
         let s = Self {
             current_scene: Some(
-                scene::StartingScene::new_box()
+                scene::StartingScene::new_box(font)
             ),
             previous_scene_stack: vec![
-                scene::GameplayScene::new_box(),
+                scene::GameplayScene::new_box(font),
             ],
             scene_event_queue: VecDeque::new(),
         };
@@ -136,6 +141,6 @@ impl event::EventHandler for MainState {
 pub fn main() -> ggez::GameResult { 
     let cb = ggez::ContextBuilder::new("LD45", "prixt");
     let (ctx, event_loop) = &mut cb.build()?;
-    let state = &mut MainState::new()?;
+    let state = &mut MainState::new(ctx)?;
     event::run(ctx, event_loop, state)
 }

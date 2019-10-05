@@ -1,17 +1,26 @@
 use super::*;
 
 pub struct StartingScene {
-    title: graphics::Text,
-    body: graphics::Text,
-    pos: Point2<f32>,
+    title: Text,
+    body: Text,
 }
 
 impl StartingScene {
-    pub fn new_box() -> SceneBox {
+    pub fn new_box(font: Font) -> SceneBox {
+        let mut title = Text::new("Untitled\nBullet Dodger");
+        title.set_font(font, Scale::uniform(50.0))
+            .set_bounds(
+                [300.0, std::f32::INFINITY],
+                graphics::Align::Center,
+            );
+        let mut body = Text::new("[W,A,S,D] to move.\nTry to dodge the bullets for as long as possible.");
+        body.set_font(font, Scale::uniform(30.0))
+            .set_bounds(
+                [300.0, std::f32::INFINITY],
+                graphics::Align::Center,
+            );
         let s = Self {
-            title: graphics::Text::new("StartingScene"),
-            body: graphics::Text::new("Lorem Ipsum"),
-            pos: [0.0, 0.0].into(),
+            title, body,
         };
         Box::new(s)
     }
@@ -27,7 +36,9 @@ impl Scene for StartingScene {
         scene_event_queue: &mut VecDeque<SceneEvent>
     ) {
         match key {
-            KeyCode::W | KeyCode::A | KeyCode::S | KeyCode::D => {
+            KeyCode::W | KeyCode::A
+            | KeyCode::S | KeyCode::D
+            | KeyCode::Space => {
                 scene_event_queue.push_back(
                     SceneEvent::Pop
                 )
@@ -43,17 +54,22 @@ impl Scene for StartingScene {
         &mut self,
         ctx: &mut Context
     ) -> ggez::GameResult {
+        let title_pos = {
+            let h = self.title.height(ctx) as f32;
+            Point2::new(250.0, 275.0 - h)
+        };
         graphics::draw(
             ctx,
             &self.title,
             graphics::DrawParam::default()
-                .dest(self.pos)
+                .dest(title_pos)
         )?;
+        let body_pos = Point2::new(250.0, 350.0);
         graphics::draw(
             ctx,
             &self.body,
             graphics::DrawParam::default()
-                .dest(self.pos + Vector2::new(0.0, 10.0))
+                .dest(body_pos)
         )?;
         Ok(())
     }

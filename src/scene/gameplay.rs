@@ -7,16 +7,20 @@ pub struct GameplayScene {
     timer: f32,
     total_time: f32,
     is_game_over: bool,
+
+    font: Font,
 }
 
 impl GameplayScene {
-    pub fn new_box() -> SceneBox {
+    pub fn new_box(font: Font) -> SceneBox {
         let s = Self {
             player: Player::new([400.0,300.0].into(), [18.0, 18.0].into()),
             enemies: vec![],
             timer: 5.0,
             total_time: 0.0,
             is_game_over: false,
+
+            font,
         };
         Box::new(s)
     }
@@ -118,7 +122,7 @@ impl Scene for GameplayScene {
         if self.is_game_over {
             scene_event_queue.push_back(
                 SceneEvent::Push(
-                    GameOverScene::new_box()
+                    GameOverScene::new_box(self.font)
                 )
             )
         }
