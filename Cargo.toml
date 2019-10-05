@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 ggez = "0.5"
 rand = "0.7"
+lazy_static = "1.4"
+rayon = "1.2"

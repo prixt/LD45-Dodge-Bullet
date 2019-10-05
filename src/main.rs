@@ -1,10 +1,15 @@
 use std::collections::VecDeque;
 
+#[macro_use] extern crate lazy_static;
 use ggez;
 use ggez::event;
 use ggez::graphics;
+use ggez::input::keyboard::{
+    KeyCode, KeyMods,
+};
 
 mod scene; use scene::{SceneEvent, SceneBox};
+mod actors;
 
 struct MainState {
     current_scene: Option<SceneBox>,
@@ -16,7 +21,7 @@ impl MainState {
     fn new() -> ggez::GameResult<MainState> {
         let s = Self {
             current_scene: Some(
-                scene::StartingScene::new_box()
+                scene::GameplayScene::new_box()
             ),
             previous_scene_stack: vec![],
             scene_event_queue: VecDeque::new(),
@@ -30,37 +35,40 @@ impl event::EventHandler for MainState {
         &mut self,
         ctx: &mut ggez::Context
     ) -> ggez::GameResult {
+        const DESIRED_FPS: u32 = 60;
+        const DT: f32 = 1.0 / DESIRED_FPS as f32;
+
         let current_scene = &mut self.current_scene;
         let previous_scene_stack = &mut self.previous_scene_stack;
         let scene_event_queue = &mut self.scene_event_queue;
 
-        for event in scene_event_queue.drain(..) {
-            match event {
-                SceneEvent::Push(scene_box) => {
-                    if let Some(prev_scene_box)
-                    = current_scene.replace(scene_box) {
-                        previous_scene_stack.push(prev_scene_box);
+        while ggez::timer::check_update_time(ctx, DESIRED_FPS) {
+            for event in scene_event_queue.drain(..) {
+                match event {
+                    SceneEvent::Push(scene_box) => {
+                        if let Some(prev_scene_box) = current_scene.replace(scene_box) {
+                            previous_scene_stack.push(prev_scene_box);
+                        }
                     }
-                }
-                SceneEvent::Pop => {
-                    if let Some(prev_scene_box)
-                    = previous_scene_stack.pop() {
-                        current_scene.replace(prev_scene_box);
+                    SceneEvent::Pop => {
+                        if let Some(prev_scene_box) = previous_scene_stack.pop() {
+                            current_scene.replace(prev_scene_box);
+                        }
                     }
-                }
-                SceneEvent::Replace(scene_box) => {
-                    current_scene.replace(scene_box);
+                    SceneEvent::Replace(scene_box) => {
+                        current_scene.replace(scene_box);
+                    }
                 }
             }
-        }
 
-        if let Some(scene) = current_scene {
-            scene.update(ctx, scene_event_queue)?;
-        }
+            if let Some(scene) = current_scene {
+                scene.update(ctx, DT, scene_event_queue)?;
+            }
 
-        for prev_scene in previous_scene_stack.iter_mut().rev() {
-            if prev_scene.update_in_background() {
-                prev_scene.update(ctx, scene_event_queue)?;
+            for prev_scene in previous_scene_stack.iter_mut().rev() {
+                if prev_scene.update_in_background() {
+                    prev_scene.update(ctx, DT, scene_event_queue)?;
+                }
             }
         }
         Ok(())
@@ -70,7 +78,7 @@ impl event::EventHandler for MainState {
         &mut self,
         ctx: &mut ggez::Context
     ) -> ggez::GameResult {
-        graphics::clear(ctx, [0.0, 0.0, 0.0, 1.0].into());
+        graphics::clear(ctx, [0.0, 0.1, 0.2, 1.0].into());
 
         let current_scene = &mut self.current_scene;
         let previous_scene_stack = &mut self.previous_scene_stack;
@@ -87,6 +95,39 @@ impl event::EventHandler for MainState {
 
         graphics::present(ctx)?;
         Ok(())
+    }
+    
+    fn key_down_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        key: KeyCode,
+        mods: KeyMods,
+        repeat: bool
+    ) {
+        if let Some(current_scene) = &mut self.current_scene {
+            current_scene.key_down_event(
+                ctx,
+                key,
+                mods,
+                repeat,
+                &mut self.scene_event_queue
+            );
+        }
+    }
+    fn key_up_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        key: KeyCode,
+        mods: KeyMods
+    ) {
+        if let Some(current_scene) = &mut self.current_scene {
+            current_scene.key_up_event(
+                ctx,
+                key,
+                mods,
+                &mut self.scene_event_queue
+            );
+        }
     }
 }
 
