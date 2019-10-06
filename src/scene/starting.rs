@@ -7,7 +7,7 @@ pub struct StartingScene {
 
 impl StartingScene {
     pub fn new_box(font: Font) -> SceneBox {
-        let mut title = Text::new("Untitled\nBullet Dodger");
+        let mut title = Text::new("Dodge Bullet");
         title.set_font(font, Scale::uniform(80.0))
             .set_bounds(
                 [800.0, 600.0],

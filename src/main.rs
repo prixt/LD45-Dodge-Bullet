@@ -146,5 +146,6 @@ pub fn main() -> ggez::GameResult {
     let cb = ggez::ContextBuilder::new("LD45", "prixt");
     let (ctx, event_loop) = &mut cb.build()?;
     let state = &mut MainState::new(ctx)?;
+    graphics::set_window_title(ctx, "LD45 - Dodge Bullet");
     event::run(ctx, event_loop, state)
 }

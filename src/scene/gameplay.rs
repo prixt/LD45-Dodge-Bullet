@@ -1,5 +1,6 @@
 use super::*;
 use crate::actors::*;
+use ggez::audio::{self, SoundSource};
 
 pub struct GameplayScene {
     player: Player,
@@ -126,7 +127,13 @@ impl Scene for GameplayScene {
                 SceneEvent::Push(
                     GameOverScene::new_box(self.font)
                 )
-            )
+            );
+
+            let explosion_sound = audio::SoundData::from_bytes(
+                include_bytes!("../../resources/explosion.wav")
+            );
+            audio::Source::from_data(ctx, explosion_sound)?
+                .play_detached()?;
         }
         else {
             let mut new_enemies: Vec<_> = self.enemies
