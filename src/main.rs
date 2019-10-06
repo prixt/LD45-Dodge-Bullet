@@ -52,17 +52,21 @@ impl event::EventHandler for MainState {
         while ggez::timer::check_update_time(ctx, DESIRED_FPS) {
             for event in scene_event_queue.drain(..) {
                 match event {
-                    SceneEvent::Push(scene_box) => {
-                        if let Some(prev_scene_box) = current_scene.replace(scene_box) {
+                    SceneEvent::Push(mut scene_box) => {
+                        scene_box.on_entry();
+                        if let Some(mut prev_scene_box) = current_scene.replace(scene_box) {
+                            prev_scene_box.on_exit();
                             previous_scene_stack.push(prev_scene_box);
                         }
                     }
                     SceneEvent::Pop => {
-                        if let Some(prev_scene_box) = previous_scene_stack.pop() {
+                        if let Some(mut prev_scene_box) = previous_scene_stack.pop() {
+                            prev_scene_box.on_entry();
                             current_scene.replace(prev_scene_box);
                         }
                     }
-                    SceneEvent::Replace(scene_box) => {
+                    SceneEvent::Replace(mut scene_box) => {
+                        scene_box.on_entry();
                         current_scene.replace(scene_box);
                     }
                 }

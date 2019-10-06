@@ -40,6 +40,9 @@ pub trait Scene {
         _scene_event_queue: &mut VecDeque<SceneEvent>
     ) {}
 
+    fn on_entry(&mut self) {}
+    fn on_exit(&mut self) {}
+
     fn update_in_background(&self) -> bool { false }
     fn draw_in_background(&self) -> bool { false }
 }

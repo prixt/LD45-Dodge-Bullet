@@ -6,6 +6,7 @@ pub struct GameplayScene {
     enemies: Vec<Box<dyn Actor>>,
     timer: f32,
     total_time: f32,
+    is_playing: bool,
     is_game_over: bool,
 
     font: Font,
@@ -18,6 +19,7 @@ impl GameplayScene {
             enemies: vec![],
             timer: 5.0,
             total_time: 0.0,
+            is_playing: false,
             is_game_over: false,
 
             font,
@@ -153,6 +155,29 @@ impl Scene for GameplayScene {
         &mut self,
         ctx: &mut Context
     ) -> ggez::GameResult {
+        if self.is_playing {
+            let mut timer_text = Text::new(format!("{:.0}", self.total_time));
+            timer_text.set_font(self.font, Scale::uniform(200.0))
+                .set_bounds(
+                    [800.0, 600.0],
+                    graphics::Align::Center
+                );
+            let h = timer_text.height(ctx);
+            graphics::draw(
+                ctx,
+                &timer_text,
+                graphics::DrawParam::default()
+                    .dest([0.0, 320.0 - h as f32 * 0.5])
+                    .color( if !self.is_game_over {
+                        [1.0, 1.0, 1.0, 0.25].into()
+                    } else {
+                        [1.0, 1.0, 1.0, 0.75].into()
+                    })
+            )?;
+            graphics::pop_transform(ctx);
+            graphics::apply_transformations(ctx)?;
+        }
+
         let mesh_builder = &mut graphics::MeshBuilder::new();
         self.player.draw(ctx, Some(mesh_builder))?;
         for enemy in self.enemies.iter() {
@@ -165,6 +190,10 @@ impl Scene for GameplayScene {
             graphics::DrawParam::default()
         )?;
         Ok(())
+    }
+
+    fn on_entry(&mut self) {
+        self.is_playing = true;
     }
 
     fn draw_in_background(&self) -> bool { true }
